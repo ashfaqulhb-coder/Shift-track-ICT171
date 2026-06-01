@@ -10,10 +10,10 @@
 ## Project Links
 
 **Public IP Address:** http://20.2.88.235  
-**DNS Entry:** [INSERT DNS NAME]  
-**Website Link:** [INSERT WEBSITE LINK]  
-**Server Report Link:** [INSERT SERVER REPORT LINK]  
-**Video Explainer Link:** [INSERT VIDEO LINK]  
+**DNS Entry:** ashfaqulshifttrack.online  
+**Website Link:** https://ashfaqulshifttrack.online  
+**Server Report Link:** https://ashfaqulshifttrack.online/shift-report.html  
+**Video Explainer Link:** [INSERT VIDEO LINK AFTER RECORDING]  
 
 ## Project Overview
 
