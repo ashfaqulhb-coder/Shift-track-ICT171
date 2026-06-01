@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ShiftTrack — Cloud Shift Management</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- ========== NAVIGATION ========== -->
+  <nav class="navbar">
+    <div class="nav-brand">
+      <span class="brand-icon">⏱</span>
+      <span class="brand-name">ShiftTrack</span>
+    </div>
+    <ul class="nav-links">
+      <li><a href="#clock">Clock In/Out</a></li>
+      <li><a href="#history">History</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="shift-report.html" target="_blank" class="nav-report-btn">Server Report</a></li>
+    </ul>
+  </nav>
+
+  <!-- ========== HERO ========== -->
+  <header class="hero">
+    <div class="hero-inner">
+      <p class="hero-label">ICT171 Cloud Server Project — Azure Ubuntu 24.04 LTS</p>
+      <h1 class="hero-title">Cloud-Based<br><span class="accent">Shift Tracker</span></h1>
+      <p class="hero-sub">Clock in, clock out, and track total work hours — all running on a manually configured Azure VM.</p>
+      <div class="hero-badges">
+        <span class="badge">Azure IaaS</span>
+        <span class="badge">Ubuntu 24.04</span>
+        <span class="badge">Apache 2</span>
+        <span class="badge">20.2.88.235</span>
+      </div>
+    </div>
+    <div class="hero-clock-display" id="liveClock"></div>
+  </header>
+
+  <!-- ========== CLOCK IN/OUT ========== -->
+  <section class="section clock-section" id="clock">
+    <div class="container">
+      <h2 class="section-title">Clock In / Clock Out</h2>
+      <p class="section-sub">Enter your name and use the buttons to record your shift.</p>
+
+      <div class="clock-card">
+        <!-- Worker Name -->
+        <div class="input-group">
+          <label for="workerName">Worker Name</label>
+          <input
+            type="text"
+            id="workerName"
+            placeholder="e.g. Ashfaqul Haque"
+            autocomplete="off"
+          />
+        </div>
+
+        <!-- Live Date/Time -->
+        <div class="datetime-display">
+          <div class="dt-block">
+            <span class="dt-label">Date</span>
+            <span class="dt-value" id="currentDate">—</span>
+          </div>
+          <div class="dt-divider"></div>
+          <div class="dt-block">
+            <span class="dt-label">Time</span>
+            <span class="dt-value mono" id="currentTime">—</span>
+          </div>
+          <div class="dt-divider"></div>
+          <div class="dt-block">
+            <span class="dt-label">Status</span>
+            <span class="dt-value status-indicator" id="shiftStatus">Clocked Out</span>
+          </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="btn-row">
+          <button class="btn btn-in" id="clockInBtn" onclick="clockIn()">
+            <span class="btn-icon">▶</span> Clock In
+          </button>
+          <button class="btn btn-out" id="clockOutBtn" onclick="clockOut()" disabled>
+            <span class="btn-icon">■</span> Clock Out
+          </button>
+        </div>
+
+        <!-- Active shift timer -->
+        <div class="active-timer" id="activeTimer" style="display:none;">
+          <span class="timer-label">Elapsed time</span>
+          <span class="timer-value mono" id="elapsedTime">00:00:00</span>
+        </div>
+
+        <!-- Message area -->
+        <div class="message-area" id="messageArea"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== HISTORY ========== -->
+  <section class="section history-section" id="history">
+    <div class="container">
+      <div class="history-header">
+        <div>
+          <h2 class="section-title">Shift History</h2>
+          <p class="section-sub">All shifts are saved in your browser using localStorage.</p>
+        </div>
+        <div class="history-controls">
+          <span class="total-hours-badge">Total: <strong id="totalHours">0h 0m</strong></span>
+          <button class="btn btn-clear" onclick="clearHistory()">Clear All</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="shift-table" id="shiftTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Worker</th>
+              <th>Clock In</th>
+              <th>Clock Out</th>
+              <th>Duration</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="shiftTableBody">
+            <!-- Rows injected by script.js -->
+          </tbody>
+        </table>
+        <div class="empty-state" id="emptyState">
+          <span>No shifts recorded yet. Clock in above to get started.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== ABOUT ========== -->
+  <section class="section about-section" id="about">
+    <div class="container about-grid">
+
+      <div class="about-card">
+        <h3>About This Project</h3>
+        <p>
+          This website is the front-end component of a cloud server project built for
+          <strong>ICT171 — Introduction to Server Environments and Architectures</strong>
+          at Murdoch University (2026, Semester 1).
+        </p>
+        <p>
+          The system demonstrates a practical use case for cloud Infrastructure as a Service (IaaS):
+          a shift clock-in and clock-out tracker suitable for small teams or volunteer groups.
+        </p>
+        <p>
+          All server configuration was performed manually through SSH — no pre-installed bundles
+          or marketplace images were used. The web server is Apache 2 running on Ubuntu 24.04 LTS.
+        </p>
+      </div>
+
+      <div class="about-card">
+        <h3>Server Details</h3>
+        <table class="info-table">
+          <tr><td>Student Name</td><td><strong>Ashfaqul Haque Bhuiyan</strong></td></tr>
+          <tr><td>Student ID</td><td><strong>35720354</strong></td></tr>
+          <tr><td>Cloud Provider</td><td>Microsoft Azure</td></tr>
+          <tr><td>VM Size</td><td>Standard D2s v3 (2 vCPU, 8 GiB)</td></tr>
+          <tr><td>OS</td><td>Ubuntu 24.04 LTS</td></tr>
+          <tr><td>Web Server</td><td>Apache 2</td></tr>
+          <tr><td>Public IP</td><td><code>20.2.88.235</code></td></tr>
+          <tr><td>DNS Name</td><td><code>[INSERT DNS NAME]</code></td></tr>
+          <tr><td>GitHub</td><td><a href="[INSERT GITHUB LINK]" target="_blank">[INSERT GITHUB LINK]</a></td></tr>
+        </table>
+      </div>
+
+      <div class="about-card">
+        <h3>How It Works</h3>
+        <ol class="how-list">
+          <li>Enter your name in the Worker Name field.</li>
+          <li>Click <strong>Clock In</strong> — the current timestamp is recorded.</li>
+          <li>When your shift ends, click <strong>Clock Out</strong> — duration is calculated automatically.</li>
+          <li>All records are stored in your browser's <code>localStorage</code> for persistence.</li>
+          <li>View totals, delete individual records, or clear all history at any time.</li>
+        </ol>
+      </div>
+
+      <div class="about-card">
+        <h3>Technical Stack</h3>
+        <ul class="tech-list">
+          <li><span class="tech-dot azure"></span>Microsoft Azure — IaaS VM hosting</li>
+          <li><span class="tech-dot ubuntu"></span>Ubuntu 24.04 LTS — Server OS</li>
+          <li><span class="tech-dot apache"></span>Apache 2 — Web server</li>
+          <li><span class="tech-dot html"></span>HTML5 / CSS3 / JavaScript — Frontend</li>
+          <li><span class="tech-dot storage"></span>localStorage API — Client-side data persistence</li>
+          <li><span class="tech-dot bash"></span>Bash — Server automation script</li>
+          <li><span class="tech-dot github"></span>GitHub — Version control &amp; documentation</li>
+        </ul>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ========== FOOTER ========== -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div>
+        <span class="brand-name">ShiftTrack</span> — ICT171 Assignment 3, 2026 S1
+      </div>
+      <div>
+        Ashfaqul Haque Bhuiyan · 35720354 · Murdoch University
+      </div>
+      <div>
+        Server IP: <code>20.2.88.235</code> &nbsp;|&nbsp;
+        <a href="shift-report.html" target="_blank">View Server Report</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
