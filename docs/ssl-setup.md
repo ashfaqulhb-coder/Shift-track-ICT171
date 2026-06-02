@@ -1,68 +1,66 @@
-SSL/TLS Configuration Guide
+SSL/TLS Configuration
 ICT171 — Ashfaqul Haque Bhuiyan (35720354)
-This document explains how to configure HTTPS on the Apache server using a free SSL/TLS certificate from Let's Encrypt via the Certbot tool. HTTPS encrypts traffic between the browser and the server.
+This document covers how HTTPS was enabled on ashfaqulshifttrack.online using a free SSL/TLS certificate from Let's Encrypt, installed via Certbot.
 
-Prerequisite: A domain name must be pointing to 20.2.88.235 before running Certbot, as Let's Encrypt uses HTTP verification to confirm you control the domain. See dns-setup.md first.
+Result Summary
+ItemValueCertificate AuthorityLet's EncryptToolCertbot with Apache pluginDomains Securedashfaqulshifttrack.online, www.ashfaqulshifttrack.onlineCertificate File/etc/letsencrypt/live/ashfaqulshifttrack.online/fullchain.pemPrivate Key/etc/letsencrypt/live/ashfaqulshifttrack.online/privkey.pemExpiry2026-08-30Auto-renewalYes — configured by CertbotHTTPS Status✓ Active
+
+Prerequisites
+Before running Certbot, the following were confirmed:
+
+ashfaqulshifttrack.online resolved to 20.2.88.235 via nslookup.
+www.ashfaqulshifttrack.online resolved to 20.2.88.235 via nslookup.
+Apache was running and serving the website on port 80.
+Port 443 was open in the Azure Network Security Group.
+UFW was set to allow Apache Full (ports 80 and 443).
 
 
-1. Install Certbot
+Step 1 — Install Certbot
 bashsudo apt update
 sudo apt install certbot python3-certbot-apache -y
-python3-certbot-apache is the Apache plugin, which automatically edits your Apache config to enable HTTPS.
+python3-certbot-apache is the Apache plugin. It reads the existing Apache configuration to locate the domain names and automatically updates the virtual host files to enable HTTPS.
 
-2. Obtain and Install a Certificate
-Run Certbot with the Apache plugin, replacing the domain name with your actual DNS name:
-bashsudo certbot --apache -d [INSERT DNS NAME]
-Certbot will:
+Step 2 — Request the Certificate
+bashsudo certbot --apache -d ashfaqulshifttrack.online -d www.ashfaqulshifttrack.online
+During the process, Certbot:
 
-Ask for an email address (for renewal notifications).
-Ask you to agree to the Let's Encrypt Terms of Service.
-Verify ownership of the domain via an HTTP challenge.
-Automatically configure Apache with HTTPS.
+Registered a new account with Let's Encrypt.
+Asked for an email address for renewal notifications.
+Asked for agreement to the Terms of Service.
+Verified domain ownership using the HTTP-01 challenge — it temporarily placed a file in the web root that Let's Encrypt fetched to confirm control of the domain.
+Issued the certificate and saved it to /etc/letsencrypt/live/ashfaqulshifttrack.online/.
+Automatically edited the Apache configuration to serve both domains over HTTPS.
 Set up an automatic redirect from HTTP to HTTPS.
 
+Certbot output:
+Account registered.
+Successfully received certificate.
+Certificate is saved at:
+  /etc/letsencrypt/live/ashfaqulshifttrack.online/fullchain.pem
+Key is saved at:
+  /etc/letsencrypt/live/ashfaqulshifttrack.online/privkey.pem
+This certificate expires on 2026-08-30.
+Certbot has set up a scheduled task to automatically renew this certificate in the background.
 
-3. Verify HTTPS
-From the server:
-bashcurl -I https://[INSERT DNS NAME]/
-Expected response includes:
-HTTP/2 200
-From a browser, visit:
-https://[INSERT DNS NAME]
-The padlock icon should appear in the address bar. Clicking it should show the Let's Encrypt certificate details.
+Deploying certificate
+Successfully deployed certificate for ashfaqulshifttrack.online
+Successfully deployed certificate for www.ashfaqulshifttrack.online
+Congratulations! You have successfully enabled HTTPS on:
+  https://ashfaqulshifttrack.online
+  https://www.ashfaqulshifttrack.online
+Screenshot: screenshots/certbot-success.png
 
-4. Check Apache SSL Configuration
-Certbot creates a new Apache config file for HTTPS. View it:
-bashsudo cat /etc/apache2/sites-available/000-default-le-ssl.conf
-It will contain SSLCertificateFile and SSLCertificateKeyFile directives pointing to the certificate files in /etc/letsencrypt/live/[domain]/.
+Step 3 — Verify HTTPS
+bashcurl -I https://ashfaqulshifttrack.online
+Result:
+HTTP/1.1 200 OK
+Server: Apache/2.4.58 (Ubuntu)
+Content-Type: text/html
+Content-Length: 8572
+The 200 OK response confirms the certificate is valid and the site is being served correctly over HTTPS.
+Screenshot: screenshots/website-https-working.png, screenshots/www-https-working.png
 
-5. Auto-Renewal
-Let's Encrypt certificates expire after 90 days. Certbot installs a cron job or systemd timer to renew them automatically. Test the renewal process without actually renewing:
+Step 4 — Auto-Renewal
+Let's Encrypt certificates expire after 90 days. Certbot installs a systemd timer that renews certificates automatically before they expire. The dry-run test confirms the renewal mechanism is working:
 bashsudo certbot renew --dry-run
-If the dry run succeeds, automatic renewal is configured correctly.
-
-6. Open Port 443 in Azure NSG
-HTTPS requires port 443 to be open in the Azure Network Security Group. If not already done:
-
-Azure Portal → VM → Networking → Add inbound port rule.
-Set destination port 443, protocol TCP, action Allow.
-Name: Allow-HTTPS, priority 310.
-Click Add.
-
-Also allow it in UFW on the server:
-bashsudo ufw allow 'Apache Full'
-sudo ufw status
-
-7. Force HTTP → HTTPS Redirect
-Certbot usually configures this automatically. To verify, check the HTTP VirtualHost config:
-bashsudo cat /etc/apache2/sites-available/000-default.conf
-It should contain a RewriteRule or Redirect line. If not, add it manually:
-apache<VirtualHost *:80>
-    ServerName [INSERT DNS NAME]
-    Redirect permanent / https://[INSERT DNS NAME]/
-</VirtualHost>
-Reload Apache:
-bashsudo systemctl reload apache2
-
-Summary
-ItemValueCertificate AuthorityLet's EncryptToolCertbotApache Pluginpython3-certbot-apacheCertificate Path/etc/letsencrypt/live/[domain]/Auto-renewalYes (via systemd timer)Expiry90 days (auto-renewed)
+No manual renewal is required as long as the server remains running and the domain continues to resolve correctly.
