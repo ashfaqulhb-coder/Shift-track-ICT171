@@ -1,75 +1,42 @@
-DNS Configuration Guide
+DNS Configuration
 ICT171 — Ashfaqul Haque Bhuiyan (35720354)
-This document explains how to configure a domain name to point to the Azure VM at 20.2.88.235, making the ShiftTrack website accessible via a human-readable URL rather than just an IP address.
+This document explains how the custom domain ashfaqulshifttrack.online was configured to point to the Azure VM at 20.2.88.235.
 
-Overview
-DNS (Domain Name System) translates a domain name (e.g. shifttrack.example.com) into an IP address (20.2.88.235) so browsers can find the server. Two common approaches are used in this project:
+DNS Approach
+A custom domain was registered through a domain registrar and configured using DNS A records. Azure's built-in public IP DNS label (visible in the Azure Portal as "DNS name: Not configured") was not used — the final DNS is entirely handled by the custom domain.
 
-Azure DNS Label — A free subdomain provided by Azure (e.g. shifttrack.eastasia.cloudapp.azure.com)
-Custom Domain — A domain registered with a third-party registrar (e.g. Freenom, Namecheap, or No-IP)
+DNS Records Created
+Two A records were added in the domain registrar's DNS management panel:
+TypeHost / NameValue / Points ToTTLA@20.2.88.235300Awww20.2.88.235300
 
+The @ record covers the root domain: ashfaqulshifttrack.online
+The www record covers the subdomain: www.ashfaqulshifttrack.online
 
-Option 1 — Azure DNS Label (Recommended for This Assignment)
-Azure allows you to assign a free DNS label to your VM's public IP address.
-Steps
+Both records point to the Azure VM's public IP address.
 
-In the Azure Portal, navigate to your VM (ict171).
-Under Settings, select Networking, then click the public IP address link.
-Under the public IP resource, select Configuration.
-In the DNS name label field, enter a unique label, e.g.:
+DNS Verification
+Both records were verified from a Windows command prompt using nslookup.
+Root domain
+nslookup ashfaqulshifttrack.online
+Result:
+Name:    ashfaqulshifttrack.online
+Address: 20.2.88.235
+WWW subdomain
+nslookup www.ashfaqulshifttrack.online
+Result:
+Name:    www.ashfaqulshifttrack.online
+Address: 20.2.88.235
+Both names resolve correctly to 20.2.88.235.
+Screenshot: screenshots/dns-nslookup-root.png, screenshots/dns-nslookup-www.png
 
-   shifttrack35720354
+Apache Virtual Host Update
+After DNS resolved, the Apache virtual host was updated to recognise both names (see Website Deployment for the full steps):
+apacheServerName ashfaqulshifttrack.online
+ServerAlias www.ashfaqulshifttrack.online
+This was done before running Certbot, as Let's Encrypt requires both names to be resolving and Apache to be configured correctly before a certificate can be issued.
 
-Click Save.
-
-The full DNS name will be:
-shifttrack35720354.eastasia.cloudapp.azure.com
-Replace eastasia with your actual Azure region if different.
-Verify
-From the server:
-bashnslookup shifttrack35720354.eastasia.cloudapp.azure.com
-Expected output will show the IP 20.2.88.235.
-From a browser:
-http://shifttrack35720354.eastasia.cloudapp.azure.com
-
-Option 2 — Custom Domain with No-IP (Free Dynamic DNS)
-No-IP provides free hostnames that can point to any IP address. Useful if you do not own a registered domain.
-Steps
-
-Create a free account at https://www.noip.com.
-Click Add Hostname.
-Choose a hostname (e.g. shifttrack) and a free domain (e.g. ddns.net).
-Set the IP Address to 20.2.88.235.
-Click Create Hostname.
-
-The resulting hostname will be:
-shifttrack.ddns.net
-Verify
-bashnslookup shifttrack.ddns.net
-Then visit:
-http://shifttrack.ddns.net
-
-Option 3 — Custom Domain via A Record (Paid Registrar)
-If you own a domain registered with Namecheap, GoDaddy, or similar:
-
-Log in to your registrar's DNS management panel.
-Add an A Record:
-
-Host: @ (root) or a subdomain such as www
-Value (Points to): 20.2.88.235
-TTL: 300 (or Auto)
-
-
-Save the record.
-
-DNS propagation can take up to 24–48 hours, though it often resolves within minutes.
-
-Update Apache ServerName (Optional but Recommended)
-If using a custom domain, update Apache to recognise it:
-bashsudo nano /etc/apache2/sites-available/000-default.conf
-Add or update:
-apacheServerName [INSERT DNS NAME]
-Save the file, then reload Apache:
+Note on Azure DNS Label
+The Azure Portal shows "DNS name: Not configured" for this VM. This is expected — the DNS label built into Azure was never set up because a custom registered domain was used instead. Both approaches achieve the same result; a custom domain was chosen to demonstrate real-world DNS configuration using A records.
 bashsudo systemctl reload apache2
 
 DNS Entry for Assignment Submission
