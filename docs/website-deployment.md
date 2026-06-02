@@ -1,64 +1,72 @@
-Website Deployment Guide
+Website Deployment
 ICT171 — Ashfaqul Haque Bhuiyan (35720354)
-This document explains how to deploy the ShiftTrack website files to the Apache web server on the Azure VM. It assumes Apache is already installed (see server-setup.md).
+This document covers cloning the GitHub repository onto the Azure VM and deploying the website files to Apache's web root.
 
-1. Apache Web Root
-Apache serves files from /var/www/html/ by default on Ubuntu. Any file placed in this directory is accessible from the browser at http://20.2.88.235/<filename>.
+Clone the GitHub Repository
+From the home directory on the server, the repository was cloned:
+bashcd ~
+git clone https://github.com/ashfaqulhb-coder/Shift-track-ICT171.git
+The cloned repository contained:
+Shift-track-ICT171/
+├── README.md
+├── docs/
+├── scripts/
+└── website/
+    ├── index.html
+    ├── script.js
+    └── style.css
+Screenshot: screenshots/github-repo-cloned.png
 
-2. Upload Files via SCP
-From your local machine, use scp to copy the website files to the server:
-bashscp website/index.html  azureuser@20.2.88.235:/tmp/
-scp website/style.css   azureuser@20.2.88.235:/tmp/
-scp website/script.js   azureuser@20.2.88.235:/tmp/
-Then, on the server, move the files into the web root:
-bashsudo mv /tmp/index.html /var/www/html/
-sudo mv /tmp/style.css  /var/www/html/
-sudo mv /tmp/script.js  /var/www/html/
-Alternatively, copy an entire directory at once:
-bashscp -r website/ azureuser@20.2.88.235:/tmp/shifttrack/
-Then on the server:
-bashsudo cp -r /tmp/shifttrack/* /var/www/html/
+Copy Website Files to Apache Web Root
+Apache serves files from /var/www/html/ by default. The website files were copied there:
+bashsudo cp -r ~/Shift-track-ICT171/website/* /var/www/html/
 
-3. Set Correct Permissions
-Apache needs to be able to read the files. Set ownership and permissions:
+Set Correct Permissions
+Apache runs as the www-data user. Ownership and permissions were set so Apache can read all files:
 bashsudo chown -R www-data:www-data /var/www/html/
 sudo chmod -R 755 /var/www/html/
-www-data is the user Apache runs as on Ubuntu. 755 allows the owner to read/write/execute and everyone else to read/execute.
+755 allows the owner to read, write, and execute, and everyone else to read and execute.
 
-4. Remove the Apache Default Page
-The default Apache placeholder (index.html) was replaced when the ShiftTrack index.html was copied in. Confirm the correct file is in place:
+Restart Apache
+Apache was restarted to apply all changes:
+bashsudo systemctl restart apache2
+
+Verify Files in Web Root
 bashls -la /var/www/html/
 Expected output:
--rw-r--r-- 1 www-data www-data  <size>  <date>  index.html
--rw-r--r-- 1 www-data www-data  <size>  <date>  script.js
--rw-r--r-- 1 www-data www-data  <size>  <date>  style.css
+-rw-r--r-- 1 www-data www-data  8572  Jun  1  index.html
+-rw-r--r-- 1 www-data www-data  <size> Jun  1  script.js
+-rw-r--r-- 1 www-data www-data  <size> Jun  1  style.css
 
-5. Verify the Website
-Test from the server using curl:
+Local HTTP Test
 bashcurl -I http://localhost/
-Expected response:
+Result:
 HTTP/1.1 200 OK
+Server: Apache/2.4.58 (Ubuntu)
 Content-Type: text/html
-...
-Then open a browser and visit:
-http://20.2.88.235
-The ShiftTrack interface should load with the live clock, worker name input, and Clock In / Clock Out buttons.
+Content-Length: 8572
+A 200 OK response confirms Apache is serving the ShiftTrack website correctly.
+Screenshot: screenshots/localhost-200-ok.png
 
-6. Deploy the Bash Script
-Copy the server report script to the scripts directory:
-bashsudo cp scripts/generate-shift-report.sh ~/scripts/generate-shift-report.sh
-sudo chmod +x ~/scripts/generate-shift-report.sh
-Run the script once to generate the initial report:
-bashsudo bash ~/scripts/generate-shift-report.sh
-Verify the output file was created:
-bashls -la /var/www/html/shift-report.html
-Visit the report in a browser:
-http://20.2.88.235/shift-report.html
+Apache Virtual Host Configuration
+The Apache virtual host file was updated to recognise the custom domain:
+bashsudo nano /etc/apache2/sites-available/000-default.conf
+The following lines were added inside the <VirtualHost *:80> block:
+apacheServerName ashfaqulshifttrack.online
+ServerAlias www.ashfaqulshifttrack.online
+Config test:
+bashsudo apache2ctl configtest
+Result: Syntax OK
+Reload Apache:
+bashsudo systemctl reload apache2
 
-7. (Optional) Schedule the Script with Cron
-To regenerate the report automatically every hour, create a cron job:
-bashecho "0 * * * * root /home/azureuser/scripts/generate-shift-report.sh" \
-  | sudo tee /etc/cron.d/shift-report
+Deploy the Bash Script
+The server report script was copied from the repository and made executable:
+bashmkdir -p ~/scripts
+cp ~/Shift-track-ICT171/scripts/generate-shift-report.sh ~/scripts/
+chmod +x ~/scripts/generate-shift-report.sh
+sudo bash ~/scripts/generate-shift-report.sh
+See Script Documentation for full details.
 Verify it was saved:
 bashcat /etc/cron.d/shift-report
 
