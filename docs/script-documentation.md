@@ -2,107 +2,89 @@ Script Documentation — generate-shift-report.sh
 ICT171 — Ashfaqul Haque Bhuiyan (35720354)
 
 Overview
-generate-shift-report.sh is a Bash script that collects live server health statistics and writes them into an HTML page at /var/www/html/shift-report.html. When a user visits http://20.2.88.235/shift-report.html, they see an up-to-date server status dashboard generated entirely by the script.
-This script serves two purposes within the assignment:
+generate-shift-report.sh is a Bash script that collects live server statistics and writes them into an HTML page at /var/www/html/shift-report.html. The page is publicly accessible via the web server, providing a verifiable, browser-viewable output of the script's work.
+Live output: https://ashfaqulshifttrack.online/shift-report.html
+The script serves two purposes:
 
-It demonstrates practical Bash scripting with real command-line tools (df, free, uptime, curl, systemctl).
-It produces a publicly verifiable output — the rendered HTML page can be shared as a URL to confirm the script ran successfully.
+It demonstrates practical Bash scripting using real system commands (df, free, uptime, curl, systemctl, awk).
+It produces a live, publicly accessible URL that confirms the script ran on the real server and generated genuine output.
 
 
-Script Location
-scripts/generate-shift-report.sh
-On the server, it is stored at:
-/home/azureuser/scripts/generate-shift-report.sh
+Locations
+LocationPathGitHub repositoryscripts/generate-shift-report.shServer copy~/scripts/generate-shift-report.shOutput file/var/www/html/shift-report.htmlPublic URLhttps://ashfaqulshifttrack.online/shift-report.html
 
-How to Run
-bashsudo bash ~/scripts/generate-shift-report.sh
-Output will be written to:
-/var/www/html/shift-report.html
+Deployment on the Server
+bashmkdir -p ~/scripts
+cp ~/Shift-track-ICT171/scripts/generate-shift-report.sh ~/scripts/
+chmod +x ~/scripts/generate-shift-report.sh
+sudo bash ~/scripts/generate-shift-report.sh
+Terminal output:
+[ShiftTrack] Generating server report...
+[ShiftTrack] Report written to /var/www/html/shift-report.html
+[ShiftTrack] Done. View at: http://20.2.88.235/shift-report.html
+Confirm the output file exists:
+bashls -la /var/www/html/shift-report.html
+Result:
+-rw-r--r-- 1 root root 6226 Jun  1 11:16 /var/www/html/shift-report.html
 
-Line-by-Line Explanation
-Shebang and Header
-bash#!/bin/bash
-Tells the system this is a Bash script. Without this, the shell might use a different interpreter.
+What the Script Collects
+CommandVariablePurposedateREPORT_TIMETimestamp for when the report was generateduptime -pUPTIMEHuman-readable server uptime (e.g. up 2 days, 3 hours)uptime -sBOOT_TIMEDate and time the server last booteddf -h / + awkDISK_TOTAL, DISK_USED, DISK_AVAIL, DISK_PERCENTRoot filesystem disk usagefree -h + awkMEM_TOTAL, MEM_USED, MEM_FREERAM usagesystemctl is-active apache2APACHE_STATUSWhether Apache is running (active or inactive)curl -s -o /dev/null -w "%{http_code}"HTTP_STATUSHTTP response code from http://localhost/hostnameHOSTNAMEServer hostnameuname -rKERNELRunning Linux kernel version
 
-Output File and IP Configuration
-bashOUTPUT_FILE="/var/www/html/shift-report.html"
-SITE_IP="20.2.88.235"
-Defining variables at the top makes it easy to update paths and IP addresses without editing multiple lines throughout the script.
-
-Report Timestamp
-bashREPORT_TIME=$(date "+%A, %d %B %Y — %H:%M:%S %Z")
-$(...) is command substitution — the output of date is captured into the REPORT_TIME variable. The format string +%A, %d %B %Y — %H:%M:%S %Z produces output like:
-Saturday, 11 April 2026 — 14:35:22 AWST
-
-Uptime
+Line-by-Line Explanation of Key Commands
+Command substitution
 bashUPTIME=$(uptime -p)
-BOOT_TIME=$(uptime -s)
+$(...) runs the command inside and captures its output into the variable. Used throughout the script to store each system metric.
 
-uptime -p — human-readable uptime, e.g. up 2 days, 3 hours
-uptime -s — the date/time the system was last booted
+Disk usage with awk
+bashDISK_USED=$(df -h / | awk 'NR==2 {print $3}')
+df -h / outputs a two-line table. awk 'NR==2' selects the second line (the data row). {print $3} prints the third column (Used). The other columns are $2 (Size), $4 (Avail), $5 (Use%).
 
+Memory usage with awk
+bashMEM_USED=$(free -h | awk '/^Mem:/ {print $3}')
+free -h prints memory in human-readable form. awk '/^Mem:/' matches the line starting with Mem:. {print $3} extracts the Used column.
 
-Disk Usage
-bashDISK_TOTAL=$(df -h / | awk 'NR==2 {print $2}')
-DISK_USED=$(df -h /  | awk 'NR==2 {print $3}')
-DISK_AVAIL=$(df -h / | awk 'NR==2 {print $4}')
-DISK_PERCENT=$(df -h / | awk 'NR==2 {print $5}')
-df -h / shows disk usage for the root filesystem (/) in human-readable units (GB). The raw output looks like:
-Filesystem      Size  Used Avail Use% Mounted on
-/dev/sda1        30G  8.2G   20G  30% /
-awk 'NR==2 {print $2}' selects the second row (NR==2) and prints the second field ($2). Each $N extracts a different column.
-
-Memory Usage
-bashMEM_TOTAL=$(free -h | awk '/^Mem:/ {print $2}')
-MEM_USED=$(free -h  | awk '/^Mem:/ {print $3}')
-MEM_FREE=$(free -h  | awk '/^Mem:/ {print $4}')
-free -h outputs memory usage in human-readable form. The /^Mem:/ pattern in awk matches the line that starts with Mem:, then $2, $3, $4 extract total, used, and free values respectively.
-
-Apache Status Check
+Apache status check
 bashAPACHE_STATUS=$(systemctl is-active apache2)
-systemctl is-active returns either active or inactive (or failed). The if statement then sets a colour and label for the HTML badge:
-bashif [ "$APACHE_STATUS" = "active" ]; then
+if [ "$APACHE_STATUS" = "active" ]; then
   APACHE_COLOUR="#00e5a0"
   APACHE_LABEL="Running"
 else
   APACHE_COLOUR="#f43f5e"
   APACHE_LABEL="Not Running"
 fi
+systemctl is-active returns active or inactive. The if block sets a colour and label used in the HTML badge — green for running, red for stopped.
 
-HTTP Status Check
+HTTP check
 bashHTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}" http://localhost/)
 
--o /dev/null — discard the response body
--s — silent mode (suppress progress output)
--w "%{http_code}" — print only the HTTP response code (e.g. 200)
+-o /dev/null — discards the response body
+-s — silent (no progress output)
+-w "%{http_code}" — prints only the HTTP status code (e.g. 200)
 
-A code of 200 means the web server is responding normally.
+A result of 200 confirms Apache is responding correctly to requests.
 
-HTML Output with Heredoc
+Heredoc output
 bashsudo tee "$OUTPUT_FILE" > /dev/null << HTML_EOF
-...HTML content...
+...HTML content with ${VARIABLE} expansions...
 HTML_EOF
-A heredoc (<< HTML_EOF ... HTML_EOF) passes multi-line content as input. tee writes it to the file. sudo is required because /var/www/html/ is owned by root. > /dev/null suppresses the duplicate output that tee would print to the terminal.
-Shell variables like ${UPTIME} are expanded inside the heredoc automatically.
+A heredoc (<< HTML_EOF ... HTML_EOF) passes a multi-line string as input. sudo tee writes it to the output file with root permissions. Shell variables like ${UPTIME} are automatically expanded inside the heredoc. > /dev/null suppresses the duplicate copy tee would otherwise print to the terminal.
 
-Verifiable Output
-The script produces a live, browser-accessible page at:
-http://20.2.88.235/shift-report.html
-The page includes:
+What the Report Page Shows
+The generated HTML page at https://ashfaqulshifttrack.online/shift-report.html displays:
 
 Server uptime and last boot time
-Disk usage (total / used / available / percentage)
-Memory usage (total / used / free)
-Apache service status badge (green = running / red = stopped)
-HTTP check badge (green = 200 OK / red = error)
+Disk usage (total, used, available, percentage)
+RAM usage (total, used, free)
+Apache service status badge — green "Running" or red "Not Running"
+HTTP check badge — green "200 OK" or red error code
 Report generation timestamp
-Auto-refresh every 60 seconds
+Server hostname and kernel version
+Auto-refresh every 60 seconds via <meta http-equiv="refresh" content="60">
 
-This provides clear visual evidence that the script ran on the live server and produced real output.
+The generation timestamp and live system statistics together confirm the output was produced by the script running on the real Azure VM.
+Screenshot: screenshots/server-report-page.png
 
-(Optional) Schedule with Cron
-To run the script automatically every hour:
-bashecho "0 * * * * root /home/azureuser/scripts/generate-shift-report.sh" \
+Optional — Run Automatically with Cron
+To regenerate the report every hour:
+bashecho "0 * * * * root /home/ashfaqul/scripts/generate-shift-report.sh" \
   | sudo tee /etc/cron.d/shift-report
-Verify the cron entry:
-bashcat /etc/cron.d/shift-report
