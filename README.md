@@ -1,6 +1,6 @@
 ShiftTrack — Cloud-Based Shift Clock-In and Clock-Out Tracking System
 ICT171 Introduction to Server Environments and Architectures — Assignment 3, 2026 S1
-FieldDetailsStudent NameAshfaqul Haque BhuiyanStudent ID35720354Cloud ProviderMicrosoft AzurePublic IP20.2.88.235DNS Entryashfaqulshifttrack.onlineWebsitehttps://ashfaqulshifttrack.onlineWWW Websitehttps://www.ashfaqulshifttrack.onlineServer Reporthttps://ashfaqulshifttrack.online/shift-report.htmlGitHub Repositoryhttps://github.com/ashfaqulhb-coder/Shift-track-ICT171Video Explainer[INSERT VIDEO LINK AFTER RECORDING]
+FieldDetailsStudent NameAshfaqul Haque BhuiyanStudent ID35720354Cloud ProviderMicrosoft AzurePublic IP20.2.88.235DNS Entryashfaqulshifttrack.onlineWebsitehttps://ashfaqulshifttrack.onlineWWW Websitehttps://www.ashfaqulshifttrack.onlineServer Reporthttps://ashfaqulshifttrack.online/shift-report.htmlGitHub Repositoryhttps://github.com/ashfaqulhb-coder/Shift-track-ICT171Video Explainer https://www.youtube.com/watch?v=w4nM0q61kEM
 
 Project Overview
 ShiftTrack is a cloud-hosted shift management system built for ICT171 at Murdoch University. Workers can clock in and out, view their shift history, and calculate total hours — all served from a manually configured Apache web server on a Microsoft Azure Ubuntu VM.
